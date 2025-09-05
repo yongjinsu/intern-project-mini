@@ -1,28 +1,14 @@
 package org.example.tttn.config;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Data
+@Component
+@ConfigurationProperties(prefix = "jwt")
 public class JwtConfig {
-    @Value("${jwt.secret-key}")
-    private String secretKey;
-
-    @Value("${jwt.access-expiration}")
-    private Long accessExpiration;
-
-    @Value("${jwt.refresh-expiration}")
-    private Long refreshExpiration;
-
-    public String getSecretKey() {
-        return secretKey;
-    }
-
-    public Long getAccessExpiration() {
-        return accessExpiration;
-    }
-
-    public Long getRefreshExpiration() {
-        return refreshExpiration;
-    }
+    private String secretKey = "mySecretKeyForJWTTokenGenerationThatIsLongEnoughForHS256Algorithm";
+    private Long accessExpiration = 86400000L; // 24 hours
+    private Long refreshExpiration = 604800000L; // 7 days
 }

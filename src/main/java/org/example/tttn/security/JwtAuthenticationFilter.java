@@ -18,8 +18,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -62,12 +60,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token không hợp lệ");
                     return;
                 }
-                if (redisService.isTokenBlacklisted(token)) {
+                
+                String jti = jwtUtil.getJtiFromToken(token);
+                if (jti != null && redisService.isTokenBlacklisted(jti)) {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token đã bị thu hồi");
                     return;
                 }
+                
                 Long userId = jwtUtil.getUserIdFromToken(token);
-                Collection<SimpleGrantedAuthority> authorities = getAuthoritiesFromRedis(userId);
+                Collection<SimpleGrantedAuthority> authorities = Collections.emptyList();
 
                 UserDetails userDetails = User.withUsername(userId.toString())
                         .password("")
@@ -90,17 +91,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private Collection<SimpleGrantedAuthority> getAuthoritiesFromRedis(Long userId) {
-        Set<PermissionCode> permissions = redisService.getUserPermissions(userId);
-        if (permissions == null || permissions.isEmpty()) {
-            return Collections.emptyList();
-        }
 
-        Collection<SimpleGrantedAuthority> authorities = permissions.stream()
-                .map(PermissionCode::getCode)
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-
-        return authorities;
-    }
 }

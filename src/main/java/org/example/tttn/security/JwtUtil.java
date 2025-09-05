@@ -1,5 +1,8 @@
 package org.example.tttn.security;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.example.tttn.config.JwtConfig;
 import org.springframework.stereotype.Component;
@@ -8,6 +11,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -23,11 +27,13 @@ public class JwtUtil {
 
     // Tạo access token với custom claims
     public String generateAccessToken(Long userId, String typeAccount, String rank) {
+        String jti = UUID.randomUUID().toString();
         return createToken(
                 Map.of(
                         "userId", userId,
                         "typeAccount", typeAccount,
-                        "rank", rank
+                        "rank", rank,
+                        "jti", jti
                 ),
                 userId.toString(),
                 jwtConfig.getAccessExpiration()
@@ -36,8 +42,9 @@ public class JwtUtil {
 
     // Tạo refresh token chỉ với userId
     public String generateRefreshToken(Long userId) {
+        String jti = UUID.randomUUID().toString();
         return createToken(
-                Map.of("userId", userId),
+                Map.of("userId", userId, "jti", jti),
                 userId.toString(),
                 jwtConfig.getRefreshExpiration()
         );
@@ -69,6 +76,11 @@ public class JwtUtil {
         return null;
     }
 
+    // Lấy JTI từ token
+    public String getJtiFromToken(String token) {
+        return getClaimFromToken(token, claims -> (String) claims.get("jti"));
+    }
+
     // Lấy username từ token (subject)
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
@@ -87,6 +99,11 @@ public class JwtUtil {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    // Lấy thời gian hết hạn của token
+    public Date getExpirationFromToken(String token) {
+        return getClaimFromToken(token, Claims::getExpiration);
     }
 
     // Kiểm tra token còn hạn không

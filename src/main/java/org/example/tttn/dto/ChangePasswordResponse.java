@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ForgetPasswordResponse {
+public class ChangePasswordResponse {
     private String message;
-    private String email;
 }

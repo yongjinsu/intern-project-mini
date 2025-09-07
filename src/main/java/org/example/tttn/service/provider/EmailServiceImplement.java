@@ -68,38 +68,6 @@ public class EmailServiceImplement implements IEmailService {
         }
     }
 
-    /**
-     * Gửi cảnh báo bảo mật
-     */
-    @Override
-    public boolean sendSecurityAlert(String toEmail, String username, org.example.tttn.entity.ResetLog resetLog) {
-        try {
-            MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("Cảnh Báo Bảo Mật - " + companyName);
-
-            Context context = new Context();
-            context.setVariable("username", username);
-            context.setVariable("resetTime", resetLog.getResetAt());
-            context.setVariable("ipAddress", resetLog.getIpAddress());
-            context.setVariable("userAgent", resetLog.getUserAgent());
-            context.setVariable("confidenceScore", resetLog.getConfidenceScore());
-            context.setVariable("companyName", companyName);
-            context.setVariable("supportUrl", supportUrl);
-            context.setVariable("year", LocalDateTime.now().getYear());
-
-            String htmlContent = emailTemplateEngine.process("security-alert", context);
-            helper.setText(htmlContent, true);
-
-            javaMailSender.send(message);
-            return true;
-
-        } catch (Exception e) {
-            return false;
-        }
-    }
 
 }

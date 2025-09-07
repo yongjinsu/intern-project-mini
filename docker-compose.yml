@@ -1,28 +1,39 @@
 services:
-  postgres:
-    image: postgres:latest
-    container_name: db_service
+  database:
+    image: postgres:15
+    container_name: app_postgres
     environment:
-      POSTGRES_USER: demo
-      POSTGRES_PASSWORD: demo
-      POSTGRES_DB: db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: securepass123
+      POSTGRES_DB: application_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  redis:
-    image: redis:latest
-    container_name: redis_service
+  cache:
+    image: redis:7
+    container_name: app_redis
     ports:
-      - "6379:6379"
-    command: redis-server --requirepass demo
+      - "6380:6379"
+    command: redis-server --requirepass securepass123 --appendonly yes
     environment:
-      - REDIS_PASSWORD=demo
+      - REDIS_PASSWORD=securepass123
     volumes:
-      - redis_data:/data
-    restart: always
+      - redis_cache:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  postgres_data:
-  redis_data:
+  pg_data:
+  redis_cache:

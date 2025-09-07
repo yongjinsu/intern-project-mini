@@ -11,7 +11,6 @@ import org.example.tttn.security.JwtUtil;
 import org.example.tttn.service.interfaces.IAuthService;
 import org.example.tttn.service.interfaces.IEmailService;
 import org.example.tttn.service.interfaces.IRedisService;
-import org.example.tttn.service.interfaces.IResetLogService;
 import org.example.tttn.util.PasswordGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,6 @@ public class AuthServiceImplement implements IAuthService {
     private final JwtUtil jwtUtil;
     private final IRedisService redisService;
     private final IEmailService emailService;
-    private final IResetLogService resetLogService;
     private final PasswordGenerator passwordGenerator;
 
     /**
@@ -147,13 +145,7 @@ public class AuthServiceImplement implements IAuthService {
             user.setPassword(hashedPassword);
             userRepository.save(user);
 
-            // Ghi log reset password
-            String ipAddress = getClientIpAddress();
-            String userAgent = getUserAgent();
-            ResetLogDto resetLogDto = resetLogService.logPasswordReset(user.getUsername(), request.getEmail(), ipAddress, userAgent);
-            
-            // Phân tích hoạt động đáng ngờ
-            resetLogService.analyzeSuspiciousActivity(resetLogDto);
+
 
             logoutAllDevices(user.getId());
 

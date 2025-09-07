@@ -5,6 +5,7 @@ import org.example.tttn.config.ApiResponse;
 import org.example.tttn.constants.MessageCode;
 import org.example.tttn.dto.*;
 import org.example.tttn.security.JwtUtil;
+import org.example.tttn.service.interfaces.IAIService;
 import org.example.tttn.service.interfaces.IAuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IAuthService authService;
+    private final IAIService aiService;
     private final JwtUtil jwtUtil;
 
     @PostMapping("/register")
@@ -55,6 +57,16 @@ public class AuthController {
         String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
         Long userId = jwtUtil.getUserIdFromToken(jwtToken);
         ChangePasswordResponse response = authService.changePassword(userId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/password-suggestions")
+    public ResponseEntity<ApiResponse<PasswordSuggestionResponse>> getPasswordSuggestions(
+            @RequestHeader("Authorization") String token) {
+        String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
+        Long userId = jwtUtil.getUserIdFromToken(jwtToken);
+        String suggestions = aiService.generatePasswordSuggestions(userId.toString());
+        PasswordSuggestionResponse response = new PasswordSuggestionResponse(suggestions);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

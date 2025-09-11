@@ -221,7 +221,7 @@ public class AuthServiceImplement implements IAuthService {
         userTokenRepository.save(userToken);
     }
 
-    private String getClientIpAddress() {
+    /*private String getClientIpAddress() {
         try {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
@@ -249,5 +249,5 @@ public class AuthServiceImplement implements IAuthService {
             // Log error if needed
         }
         return "unknown";
-    }
+    }*/
 }

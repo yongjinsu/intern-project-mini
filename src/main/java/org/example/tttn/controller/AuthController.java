@@ -5,7 +5,6 @@ import org.example.tttn.config.ApiResponse;
 import org.example.tttn.constants.MessageCode;
 import org.example.tttn.dto.*;
 import org.example.tttn.security.JwtUtil;
-import org.example.tttn.service.interfaces.IAIService;
 import org.example.tttn.service.interfaces.IAuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final IAuthService authService;
-    private final IAIService aiService;
-    private final JwtUtil jwtUtil;
+//    private final JwtUtil jwtUtil;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<RegisterResponse>> register(@RequestBody RegisterRequest request) {
@@ -50,23 +48,5 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(MessageCode.AUTH_PASSWORD_RESET_SUCCESS, response));
     }
 
-    @PostMapping("/change-password")
-    public ResponseEntity<ApiResponse<ChangePasswordResponse>> changePassword(
-            @RequestHeader("Authorization") String token,
-            @RequestBody ChangePasswordRequest request) {
-        String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
-        Long userId = jwtUtil.getUserIdFromToken(jwtToken);
-        ChangePasswordResponse response = authService.changePassword(userId, request);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
 
-    @GetMapping("/password-suggestions")
-    public ResponseEntity<ApiResponse<PasswordSuggestionResponse>> getPasswordSuggestions(
-            @RequestHeader("Authorization") String token) {
-        String jwtToken = token.startsWith("Bearer ") ? token.substring(7) : token;
-        Long userId = jwtUtil.getUserIdFromToken(jwtToken);
-        String suggestions = aiService.generatePasswordSuggestions(userId.toString());
-        PasswordSuggestionResponse response = new PasswordSuggestionResponse(suggestions);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
 }

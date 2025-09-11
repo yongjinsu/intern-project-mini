@@ -18,11 +18,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtUtil jwtUtil;
     private final IRedisService redisService;
 
@@ -52,44 +55,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             token = request.getHeader("accessToken");
         }
 
+        logger.debug("Processing request to: {} with token present: {}", path, token != null);
+
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
 
             try {
-                if (!jwtUtil.validateToken(token)) {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token không hợp lệ");
-                    return;
+                if (jwtUtil.validateToken(token)) {
+                    String jti = jwtUtil.getJtiFromToken(token);
+                    if (jti == null || !redisService.isTokenBlacklisted(jti)) {
+                        Long userId = jwtUtil.getUserIdFromToken(token);
+                        Collection<SimpleGrantedAuthority> authorities = Collections.emptyList();
+
+                        UserDetails userDetails = User.withUsername(userId.toString())
+                                .password("")
+                                .authorities(authorities)
+                                .build();
+
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, authorities
+                        );
+
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        logger.debug("Successfully authenticated user: {}", userId);
+                    } else {
+                        logger.debug("Token is blacklisted");
+                    }
+                } else {
+                    logger.debug("Token validation failed");
                 }
-                
-                String jti = jwtUtil.getJtiFromToken(token);
-                if (jti != null && redisService.isTokenBlacklisted(jti)) {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token đã bị thu hồi");
-                    return;
-                }
-                
-                Long userId = jwtUtil.getUserIdFromToken(token);
-                Collection<SimpleGrantedAuthority> authorities = Collections.emptyList();
-
-                UserDetails userDetails = User.withUsername(userId.toString())
-                        .password("")
-                        .authorities(authorities)
-                        .build();
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, authorities
-                );
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             } catch (Exception e) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token không hợp lệ");
-                return;
+                logger.debug("Error processing JWT token: {}", e.getMessage());
             }
         } else {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Thiếu token xác thực");
-            return;
+            logger.debug("No valid Bearer token found in request");
         }
         filterChain.doFilter(request, response);
     }
-
-
 }

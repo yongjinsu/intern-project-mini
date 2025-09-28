@@ -21,7 +21,7 @@ services:
     image: redis:7
     container_name: app_redis
     ports:
-      - "6380:6379"
+      - "6379:6379"
     command: redis-server --requirepass securepass123 --appendonly yes
     environment:
       - REDIS_PASSWORD=securepass123
